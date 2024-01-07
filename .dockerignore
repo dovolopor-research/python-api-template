@@ -4,3 +4,6 @@ __pycache__
 .DS_Store
 log/
 doc/
+.git/
+script/
+.idea/

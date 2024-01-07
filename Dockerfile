@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.8-slim-bullseye
 
 # 设置时间为上海时间
 ENV TZ=Asia/Shanghai DEBIAN_FRONTEND=noninteractive
@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY ./requirements.txt /app/requirements.txt
 
-RUN pip install -r requirements.txt -i https://pypi.douban.com/simple
+RUN pip install -r requirements.txt -i https://pypi.mirrors.ustc.edu.cn/simple
 
 COPY ./ /app/
 

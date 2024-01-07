@@ -1,11 +1,14 @@
+import os
+
 from ruamel.yaml import YAML
 
 from util.log import get_logger
-from util.arg import get_args
 
+env = os.getenv("ENV", "dev")
+model = os.getenv("MODEL", "default")
 yaml = YAML()
-logger = get_logger(__name__)
-args = get_args()
+logger = get_logger("util.conf")
+logger.info(f"[ENV] {env}")
 
 
 def read_yaml(yaml_path: str) -> dict:
@@ -14,7 +17,16 @@ def read_yaml(yaml_path: str) -> dict:
     return datas
 
 
+def write_yaml(data: any, yaml_path: str) -> None:
+    with open(yaml_path, "w") as f_yaml:
+        yaml.dump(data, f_yaml)
+
+
 def get_conf() -> dict:
-    conf_data = read_yaml(args["conf"])
-    conf_data["env"] = args["env"]
+    if env == "dev":
+        conf_path = f"./conf/{model}.yaml"
+    else:
+        conf_path = f"./conf/{model}.{env}.yaml"
+    conf_data = read_yaml(conf_path)
+    conf_data["env"] = env
     return conf_data

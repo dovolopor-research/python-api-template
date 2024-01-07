@@ -2,6 +2,14 @@
 
 🐍 一个**快速高性能**的「Python API 模板」
 
+## 0 快速启动
+
+```shell
+pip install -r requirements.txt
+
+python -m server.main
+```
+
 ## 1 目录简介
 
 ```
@@ -10,15 +18,17 @@
 ├── server                # 部署
 │   └── app.py
 ├── conf                  # 配置
-│   ├── default.prod.yml
-│   ├── default.test.yml
-│   └── default.yml
+│   ├── default.prod.yaml # 生产配置
+│   ├── default.test.yaml # 测试配置
+│   └── default.yaml      # 开发配置
 ├── util                  # 辅助
-│   ├── arg.py
 │   ├── conf.py
 │   ├── log.py
-│   ├── data_model.py
-│   └── db.py
+│   └── data_model.py     # 类型定义
+├── script                # 脚本
+│   ├── sync.sh           # 同步到服务器
+│   ├── build.sh          # 打包镜像
+│   └── run.sh            # 运行容器
 ├── test                  # 测试（可选）
 │   └── api_test.py
 ├── doc                   # 文档（可选）
@@ -34,7 +44,7 @@
 
 **一个详尽的文档比什么都重要！** 任何人都可以通过文档快速上手。也许你会说，我的代码就我自己看，不写文档也知道。可是你能保证三个月以后，你还记得你当初写的什么吗？！
 
-一个好的深度学习项目文档应该是怎样的？
+一个好的项目文档应该是怎样的？
 
 1. 环境依赖说明
 2. 快速运行脚本
@@ -53,31 +63,43 @@
 一些常见的辅助函数，比如：
 
 1. conf 配置
-2. arg 参数
-3. data_model 数据模型
-4. log 日志
-5. db 数据库
+2. data_model 类型注解
+3. log 日志
 
 ### 1.3 conf（配置中心）
 
 所有的配置都是用 `YAML`，它比 `json` 更好用，可以在配置中添加注释，并且呈现方式也更为直观！
 
-配置文件的中间名称是「环境变量」，比如 ENV 为 `test` 时，就会读取 `default.test.yml` 文件（ENV 默认为 `dev`，会读取 `default.yml`）。
+配置文件的中间名称是「环境变量」，比如 ENV 为 `test` 时，就会读取 `default.test.yaml` 文件（ENV 默认为 `dev`，会读取 `default.yaml`）。
 
-如何使用环境变量 ENV 呢？只需要在执行时，把 `-e test` 添加到命令的后面。
+如何使用环境变量 ENV 呢？只需要在执行时，把 `ENV=test` 添加到命令的最前面，比如 `ENV=test python -m server.main`。
 
 ```shell
-python -m server.main -e test
+# 默认是 ENV 是 dev
+python -m server.main
 # or
-python -m server.main --env test
+ENV=dev python -m server.main
 ```
 
 ### 1.4 server（部署）
 
-使用 Web 服务部署到线上环境，推荐使用 [Sanic](https://sanic.dev/zh/)。
+使用 Web 服务部署到线上环境，推荐使用 [FastAPI](https://fastapi.tiangolo.com/zh/)。
+
+1. **高性能**：FastAPI 是基于 Starlette 和 Pydantic 构建的，因此它具有非常高的性能。与其他 Python Web 框架相比，它的速度更快，甚至可以与 Node.js 和 Go 这样的高性能语言竞争。
+2. **易用性和开发效率**：FastAPI 使用了现代 Python 特性，如类型提示，使得代码易于阅读和编写。这有助于提高开发者的生产力以及减少错误。另外，它自动生成 API 文档（使用 OpenAPI 和 JSON Schema），方便开发者查看和测试 API 接口。
+3. **丰富地插件和社区支持**：FastAPI 提供了许多内置组件，如身份验证、安全、数据验证等，可帮助您快速构建 Web 应用。同时，由于 FastAPI 的普及，其拥有一个庞大的活跃社区，为开发者提供大量第三方库和技术支持。
+
+> 在过去本项目推荐使用 [Sanic](https://sanic.dev/zh/)，你可以在这个分支 [branch/sanic](https://github.com/Ailln/python-api-template/tree/sanic) 找到过去的代码。
 
 ```shell
+# 开发环境运行
 python -m server.main
+
+# 测试环境运行
+ENV=test python -m server.main
+
+# 生产环境运行
+ENV=prod python -m server.main
 ```
 
 ### 1.5 test（测试）
@@ -102,14 +124,15 @@ locust -f test/api_test.py -u 10 -r 1
 
 ### 1.7 log（日志）
 
-`util/log.py` 会将日志按天记录到这里。
+`util/log.py` 会将日志按天记录到 log 目录下。
 
 ### 1.8 requirements.txt （依赖）
 
 项目所需要的依赖，方便一键安装。
 
 ```shell
-pip install -r requirements.txt -i https://pypi.douban.com/simple
+# 直接安装
+pip install -r requirements.txt -i https://pypi.mirrors.ustc.edu.cn/simple
 ```
 
 参考：
@@ -128,8 +151,8 @@ pip install -r requirements.txt -i https://pypi.douban.com/simple
 ## 2 环境准备
 
 - Ubuntu 18.04 LTS+
-- Python 3.7+
-- Anaconda 3
+- Python 3.8+
+- Docker 21+
 
 > 人生苦短，快用 `*NIX` ！
 
@@ -137,22 +160,30 @@ pip install -r requirements.txt -i https://pypi.douban.com/simple
 
 ```shell
 cd python-api-template
-# 打包
-docker build -t python-api:0.1.0 .
 
-# 运行
-docker run -d --name python-api -p 9999:9999 \
-  -v $PWD/conf/default.test.yaml:/app/conf/default.yaml \
-  python-api:0.1.0
+# 直接打包
+docker build -t python-api-template:1.0.0 .
+# or 使用脚本打包
+bash script/build.sh
+
+# 直接运行
+docker run -d  --restart=always \
+  --name python-api \
+  -p 9999:9999 \
+  -v $PWD/conf/:/app/conf \
+  -e ENV=prod \
+  python-api-template:1.0.0
+# or 使用脚本运行
+bash script/run.sh
 
 # 查看
-docker logs -f python-api
+docker logs -f python-api-template
 
 # 调用 API
 curl --location --request POST 'http://127.0.0.1:9999/test' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "name": "test"
+    "data": "test"
 }'
 ```
 

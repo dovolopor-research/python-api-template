@@ -1,13 +1,7 @@
-version: 0.1.0
-
 server:
-  name: python-api
-  version: 0.1.0
-  host: 0.0.0.0
-  port: 9999
-  debug: false
-  auto_reload: false
-
-db:
-  mongo:
-    url: "mongodb://127.0.0.1:27017"
+  name: python-api-template
+  version: 1.0.0
+  run:
+    host: 0.0.0.0
+    port: 9999
+    reload: True

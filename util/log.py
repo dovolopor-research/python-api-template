@@ -1,9 +1,29 @@
-import time
+import os
 import pathlib
 import logging
+from logging.handlers import TimedRotatingFileHandler
+
+import colorlog
 
 
-def get_logger(name: str = "project", level: str = "info") -> logging.Logger:
+env = os.getenv("ENV", "dev")
+default_level_dict = {
+    "dev": "debug",
+    "test": "debug",
+    "prod": "info"
+}
+default_level = default_level_dict.get(env, "info")
+
+log_colors = {
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "CRITICAL": "purple"
+}
+
+
+def get_logger(name: str = "project", level: str = default_level) -> logging.Logger:
     # set logger
     logger = logging.getLogger(name)
     level_dict = {
@@ -16,28 +36,25 @@ def get_logger(name: str = "project", level: str = "info") -> logging.Logger:
     logger.setLevel(level_dict[level])
 
     if not logger.handlers:
-        # file handler
+        # time rotating file handler
         log_path = log_path_util(name)
-        fh = logging.FileHandler(log_path)
-        fh.setLevel(logging.INFO)
-        fh_fmt = logging.Formatter("%(asctime)-15s [%(filename)s] %(levelname)s %(lineno)d: %(message)s")
-        fh.setFormatter(fh_fmt)
+        rotate_fh = TimedRotatingFileHandler(filename=log_path, when="midnight", interval=1, backupCount=365)
+        rotate_fh.setLevel(logging.INFO)
+        rotate_fh_fmt = logging.Formatter("%(asctime)-15s [%(filename)s] %(levelname)s %(lineno)d: %(message)s")
+        rotate_fh.setFormatter(rotate_fh_fmt)
+        logger.addHandler(rotate_fh)
 
         # stream handler
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
-        console_fmt = logging.Formatter("%(asctime)-15s [%(filename)s] %(levelname)s %(lineno)d: %(message)s")
+        console_fmt_str = "%(asctime)-15s [%(filename)s] %(log_color)s%(levelname)s%(reset)s %(lineno)d: %(message)s"
+        console_fmt = colorlog.ColoredFormatter(console_fmt_str, log_colors=log_colors)
         console.setFormatter(console_fmt)
-
-        logger.addHandler(fh)
         logger.addHandler(console)
-
     return logger
 
 
 def log_path_util(name: str) -> str:
-    day = time.strftime("%Y-%m-%d", time.localtime())
-    log_path = pathlib.Path(f"./log/{day}")
-    if not log_path.exists():
-        log_path.mkdir(parents=True)
-    return f"{str(log_path)}/{name}.log"
+    log_path = pathlib.Path(f"./log/")
+    log_path.mkdir(parents=True, exist_ok=True)
+    return str(log_path / f"{name}.log")

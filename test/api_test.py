@@ -5,9 +5,9 @@ from locust import task
 from locust import HttpUser
 
 names = [
-    "hello world",
-    "this is a test",
-    "come on, baby"
+    "jack",
+    "steve",
+    "bob"
 ]
 
 
